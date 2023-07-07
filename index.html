@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+
+<body>
+    <h1>k-nearest neighbors</h1>
+    k : <input type="range" id="kInput" min="1" max="300" oninput="update()">
+<br/>
+    <canvas id="canvas" width="640" height="480"></canvas>
+
+    <script>
+        const S = 8;
+        const NBPOINTS = 200;
+        const ctx = canvas.getContext("2d");
+
+        function createDataSet() {
+            const points = [];
+            for (let i = 0; i < NBPOINTS; i++) {
+                points.push({ x: Math.random() * 640 / S, y: Math.random() * 480 / S, c: Math.floor(Math.random() * 3) });
+            }
+            return points;
+        }
+        const points = createDataSet();
+        const colors = ["blue", "green", "red"]
+
+
+        function draw(x, y, c) {
+            ctx.fillStyle = colors[c];
+            ctx.fillRect(x * S, y * S, S, S);
+        }
+
+        function update() {
+            const k = kInput.value;
+
+            ctx.clearRect(0, 0, 640, 480);
+
+            ctx.globalAlpha = 0.3;
+            for (let x = 0; x < 640 / S; x++)
+                for (let y = 0; y < 480 / S; y++)
+                    draw(x, y, knn(x, y));
+            ctx.globalAlpha = 1;
+
+            for (const point of points)
+                draw(point.x, point.y, point.c);
+
+            function d2(a, b) {
+                return (a.x - b.x) ** 2 + (a.y - b.y) ** 2;
+            }
+
+            function knn(x, y) {
+                const sorted = points.sort((p1, p2) => d2(p2, { x, y }) < d2(p1, { x, y }));
+                return maj(sorted.map((p) => p.c).slice(0, k));
+            }
+
+            function maj(A) {
+                const C = [0, 0, 0, 0];
+                for (const el of A) {
+                    C[el]++;
+                }
+                let imax = 0;
+                for (let i = 0; i < C.length; i++)
+                    if (C[imax] < C[i])
+                        imax = i;
+                return imax;
+            }
+        }
+
+        update();
+
+    </script>

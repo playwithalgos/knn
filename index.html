@@ -3,14 +3,16 @@
 
 <body>
     <h1>k-nearest neighbors</h1>
-    k : <input type="range" id="kInput" min="1" max="300" value="1" oninput="update()">
-<br/>
-    <canvas id="canvas" width="640" height="480"></canvas>
-
+    <span id="klabel">k=1</span> <input style="width: 550px" type="range" id="kInput" min="1" max="170" value="1"
+        oninput="update()">
+    <br />
+    <canvas style="position:absolute" id="canvas" width="640" height="480"></canvas>
+    <canvas style="position:absolute" id="canvasTop" width="640" height="480"></canvas>
     <script>
         const S = 8;
         const NBPOINTS = 200;
         const ctx = canvas.getContext("2d");
+        const ctxTop = canvasTop.getContext("2d");
 
         function createDataSet() {
             const points = [];
@@ -28,8 +30,19 @@
             ctx.fillRect(x * S, y * S, S, S);
         }
 
+
+
+        function knearest(x, y, k) {
+            function d2(a, b) {
+                return (a.x - b.x) ** 2 + (a.y - b.y) ** 2;
+            }
+            const sorted = points.sort((p1, p2) => d2(p2, { x, y }) < d2(p1, { x, y }));
+            return sorted.slice(0, k);
+        }
+
         function update() {
             const k = kInput.value;
+            klabel.innerHTML = "k = " + k;
 
             ctx.clearRect(0, 0, 640, 480);
 
@@ -42,13 +55,13 @@
             for (const point of points)
                 draw(point.x, point.y, point.c);
 
-            function d2(a, b) {
-                return (a.x - b.x) ** 2 + (a.y - b.y) ** 2;
-            }
+
+
+
+
 
             function knn(x, y) {
-                const sorted = points.sort((p1, p2) => d2(p2, { x, y }) < d2(p1, { x, y }));
-                return maj(sorted.map((p) => p.c).slice(0, k));
+                return maj(knearest(x, y, k).map((p) => p.c));
             }
 
             function maj(A) {
@@ -65,5 +78,21 @@
         }
 
         update();
+
+        canvasTop.onmousemove = (evt) => {
+            const x = evt.offsetX / S;
+            const y = evt.offsetY / S;
+            ctxTop.clearRect(0, 0, 640, 480);
+            function strokePoint(x, y, c) {
+                ctxTop.strokeStyle = "white";
+                ctxTop.lineWidth = 2;
+                ctxTop.strokeRect(x * S, y * S, S, S);
+            }
+            const k = kInput.value;
+            for (let p of knearest(x, y, k)) {
+                strokePoint(p.x, p.y, p.c);
+            }
+
+        }
 
     </script>

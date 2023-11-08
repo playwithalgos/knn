@@ -25,15 +25,15 @@
 
 
     @keyframes highlightAnimation {
-        from {}
+        from {
+            scale: 1.5;
+        }
 
         50% {
             scale: 2;
         }
 
-        90% {
-            scale: 2;
-        }
+
 
         to {
             scale: 1.5;
@@ -42,7 +42,8 @@
 
 
     .highlight {
-        animation-duration: 2s;
+        animation-duration: 1s;
+        animation-iteration-count: infinite;
         animation-name: highlightAnimation;
         border: 1px solid white;
         border-radius: 0px;
@@ -77,6 +78,7 @@
     }
 
     .currentPoint {
+        border-radius: 4px;
         border: 1px solid black;
         width: 8px;
         height: 8px;
@@ -84,7 +86,6 @@
         text-align: center;
         font-weight: bold;
         padding: 0px;
-        border-radius: 0px;
         animation-duration: 2s;
         animation-name: currentPointAnimation;
     }
@@ -145,12 +146,6 @@
         }
 
 
-
-
-
-
-
-
         function knearest(x, y, k) {
             function d2(a, b) {
                 return (a.x - b.x) ** 2 + (a.y - b.y) ** 2;
@@ -159,7 +154,7 @@
             return sorted.slice(0, k);
         }
 
-        function knn(x, y) {
+        function knn(x, y, k) {
             function maj(A) {
                 const C = [0, 0, 0, 0];
                 for (const el of A) {
@@ -171,12 +166,13 @@
                         imax = i;
                 return imax;
             }
-            const k = kInput.value;
-            klabel.innerHTML = "k = " + k;
             return maj(knearest(x, y, k).map((p) => p.c));
         }
 
         function update() {
+            const k = kInput.value;
+            klabel.innerHTML = "k = " + k;
+
             ctx.clearRect(0, 0, 640, 480);
 
             function draw(x, y, c) {
@@ -187,7 +183,7 @@
             ctx.globalAlpha = 0.2;
             for (let x = 0; x < 640 / S; x++)
                 for (let y = 0; y < 480 / S; y++)
-                    draw(x, y, knn(x, y));
+                    draw(x, y, knn(x, y, k));
         }
 
         update();
@@ -230,7 +226,7 @@
             currentDomPoint.remove();
             currentDomPoint = el;
             playground.appendChild(currentDomPoint);
-            currentDomPoint.style.backgroundColor = colors[knn(x, y)];
+            currentDomPoint.style.backgroundColor = colors[knn(x, y, k)];
 
         }
 

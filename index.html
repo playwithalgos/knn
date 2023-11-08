@@ -1,34 +1,148 @@
 <!DOCTYPE html>
 <meta charset="utf-8">
 
+<style>
+    canvas {
+        position: absolute;
+        cursor: none;
+    }
+
+    #playground {
+        position: relative;
+    }
+
+    .point {
+        position: absolute;
+        width: 6px;
+        height: 6px;
+        border: 0px solid white;
+        margin: 0px;
+        padding: 0px;
+        pointer-events: none;
+        border-radius: 4px;
+
+    }
+
+
+    @keyframes highlightAnimation {
+        from {}
+
+        50% {
+            scale: 2;
+        }
+
+        90% {
+            scale: 2;
+        }
+
+        to {
+            scale: 1.5;
+        }
+    }
+
+
+    .highlight {
+        animation-duration: 2s;
+        animation-name: highlightAnimation;
+        border: 1px solid white;
+        border-radius: 0px;
+        scale: 1.2;
+    }
+
+
+
+    @keyframes currentPointAnimation {
+        from {
+            background: transparent;
+        }
+
+        50% {
+            background: transparent;
+            rotate: 0deg;
+            scale: 1;
+        }
+
+
+        75% {
+            scale: 2;
+            color: black;
+
+        }
+
+        to {
+            rotate: 360deg;
+            color: transparent;
+
+        }
+    }
+
+    .currentPoint {
+        border: 1px solid black;
+        width: 8px;
+        height: 8px;
+        font-size: 6px;
+        text-align: center;
+        font-weight: bold;
+        padding:0px;
+        border-radius: 0px;
+        animation-duration: 2s;
+        animation-name: currentPointAnimation;
+    }
+</style>
+
 <body>
     <h1>k-nearest neighbors</h1>
     <span id="klabel">k=1</span> <input style="width: 550px" type="range" id="kInput" min="1" max="170" value="1"
         oninput="update()">
     <br />
-    <canvas style="position:absolute" id="canvas" width="640" height="480"></canvas>
-    <canvas style="position:absolute" id="canvasTop" width="640" height="480"></canvas>
+    <div id="playground">
+        <canvas id="canvas" width="640" height="480"></canvas>
+    </div>
+
     <script>
         const S = 8;
         const NBPOINTS = 200;
         const ctx = canvas.getContext("2d");
-        const ctxTop = canvasTop.getContext("2d");
+        const colors = ["blue", "green", "red"]
+
 
         function createDataSet() {
             const points = [];
             for (let i = 0; i < NBPOINTS; i++) {
-                points.push({ x: Math.random() * 640 / S, y: Math.random() * 480 / S, c: Math.floor(Math.random() * 3) });
+                points.push({
+                    i,
+                    x: Math.round(Math.random() * 640 / S),
+                    y: Math.round(Math.random() * 480 / S),
+                    c: Math.floor(Math.random() * 3)
+                });
             }
             return points;
         }
-        const points = createDataSet();
-        const colors = ["blue", "green", "red"]
 
-
-        function draw(x, y, c) {
-            ctx.fillStyle = colors[c];
-            ctx.fillRect(x * S, y * S, S, S);
+        function createDomPoints(points) {
+            const domPoints = [];
+            for (let i = 0; i < NBPOINTS; i++) {
+                const el = document.createElement("div");
+                el.classList.add("point");
+                el.style.left = S * points[i].x + "px";
+                el.style.top = S * points[i].y + "px";
+                el.style.backgroundColor = colors[points[i].c];
+                domPoints.push(el);
+            }
+            return domPoints;
         }
+
+        const points = createDataSet();
+        const domPoints = createDomPoints(points);
+
+        for (const domPoint of domPoints) {
+            playground.appendChild(domPoint);
+        }
+
+
+
+
+
 
 
 
@@ -40,30 +154,7 @@
             return sorted.slice(0, k);
         }
 
-        function update() {
-            const k = kInput.value;
-            klabel.innerHTML = "k = " + k;
-
-            ctx.clearRect(0, 0, 640, 480);
-
-            ctx.globalAlpha = 0.3;
-            for (let x = 0; x < 640 / S; x++)
-                for (let y = 0; y < 480 / S; y++)
-                    draw(x, y, knn(x, y));
-            ctx.globalAlpha = 1;
-
-            for (const point of points)
-                draw(point.x, point.y, point.c);
-
-
-
-
-
-
-            function knn(x, y) {
-                return maj(knearest(x, y, k).map((p) => p.c));
-            }
-
+        function knn(x, y) {
             function maj(A) {
                 const C = [0, 0, 0, 0];
                 for (const el of A) {
@@ -75,23 +166,66 @@
                         imax = i;
                 return imax;
             }
+            const k = kInput.value;
+            klabel.innerHTML = "k = " + k;
+            return maj(knearest(x, y, k).map((p) => p.c));
+        }
+
+        function update() {
+            ctx.clearRect(0, 0, 640, 480);
+
+            function draw(x, y, c) {
+                ctx.fillStyle = colors[c];
+                ctx.fillRect(x * S, y * S, S, S);
+            }
+
+            ctx.globalAlpha = 0.2;
+            for (let x = 0; x < 640 / S; x++)
+                for (let y = 0; y < 480 / S; y++)
+                    draw(x, y, knn(x, y));
         }
 
         update();
 
-        canvasTop.onmousemove = (evt) => {
-            const x = evt.offsetX / S;
-            const y = evt.offsetY / S;
-            ctxTop.clearRect(0, 0, 640, 480);
-            function strokePoint(x, y, c) {
-                ctxTop.strokeStyle = "white";
-                ctxTop.lineWidth = 2;
-                ctxTop.strokeRect(x * S, y * S, S, S);
+        let currentDomPoint = document.createElement("div");
+        currentDomPoint.innerHTML = "?";
+        currentDomPoint.classList.add("point");
+        currentDomPoint.classList.add("currentPoint");
+        currentDomPoint.style.left = 0 * S + "px";
+        currentDomPoint.style.top = 0 * S + "px";
+
+
+        canvas.onmousemove = (evt) => {
+            const x = Math.round(evt.offsetX / S);
+            const y = Math.round(evt.offsetY / S);
+
+            if (parseInt(currentDomPoint.style.left) == x * S && parseInt(currentDomPoint.style.top) == y * S)
+                return;
+
+
+
+            currentDomPoint.style.left = x * S + "px";
+            currentDomPoint.style.top = y * S + "px";
+
+            for (const domPoint of domPoints) {
+                domPoint.classList.remove("highlight");
             }
+
             const k = kInput.value;
-            for (let p of knearest(x, y, k)) {
-                strokePoint(p.x, p.y, p.c);
+            for (const p of knearest(x, y, k)) {
+                const el = domPoints[p.i];
+                domPoints[p.i] = el.cloneNode(true);
+                playground.appendChild(domPoints[p.i]);
+                el.remove();
+                domPoints[p.i].classList.add("highlight");
             }
+
+
+            const el = currentDomPoint.cloneNode(true);
+            currentDomPoint.remove();
+            currentDomPoint = el;
+            playground.appendChild(currentDomPoint);
+            currentDomPoint.style.backgroundColor = colors[knn(x, y)];
 
         }
 

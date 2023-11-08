@@ -83,7 +83,7 @@
         font-size: 6px;
         text-align: center;
         font-weight: bold;
-        padding:0px;
+        padding: 0px;
         border-radius: 0px;
         animation-duration: 2s;
         animation-name: currentPointAnimation;
@@ -107,21 +107,27 @@
 
 
         function createDataSet() {
+
+            const hashtable = {};
             const points = [];
             for (let i = 0; i < NBPOINTS; i++) {
-                points.push({
-                    i,
-                    x: Math.round(Math.random() * 640 / S),
-                    y: Math.round(Math.random() * 480 / S),
-                    c: Math.floor(Math.random() * 3)
-                });
+                while (true) {
+                    const x = Math.round(Math.random() * 640 / S);
+                    const y = Math.round(Math.random() * 480 / S);
+                    const hash = x + "+" + y;
+                    if (hashtable[hash] == undefined) {
+                        points.push({ x: x, y: y, i, c: Math.floor(Math.random() * 3) });
+                        hashtable[hash] = true;
+                        break;
+                    }
+                }
             }
             return points;
         }
 
         function createDomPoints(points) {
             const domPoints = [];
-            for (let i = 0; i < NBPOINTS; i++) {
+            for (let i = 0; i < points.length; i++) {
                 const el = document.createElement("div");
                 el.classList.add("point");
                 el.style.left = S * points[i].x + "px";

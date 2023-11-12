@@ -2,9 +2,16 @@
 <meta charset="utf-8">
 
 <style>
+    svg,
     canvas {
         position: absolute;
         cursor: none;
+        width: 640px;
+        height: 480px;
+    }
+
+    svg {
+        pointer-events: none;
     }
 
     #playground {
@@ -42,8 +49,7 @@
 
 
     .highlight {
-        animation-duration: 1s;
-        animation-iteration-count: infinite;
+        animation-duration: 3s;
         animation-name: highlightAnimation;
         border: 1px solid white;
         border-radius: 0px;
@@ -89,6 +95,12 @@
         animation-duration: 2s;
         animation-name: currentPointAnimation;
     }
+
+    circle {
+        stroke: rgba(255, 255, 255, 0.5);
+        stroke-width: 1px;
+        fill: none;
+    }
 </style>
 
 <body>
@@ -98,6 +110,8 @@
     <br />
     <div id="playground">
         <canvas id="canvas" width="640" height="480"></canvas>
+        <svg id="svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 480">
+        </svg>
     </div>
 
     <script>
@@ -130,8 +144,8 @@
             for (let i = 0; i < points.length; i++) {
                 const el = document.createElement("div");
                 el.classList.add("point");
-                el.style.left = S * points[i].x + "px";
-                el.style.top = S * points[i].y + "px";
+                el.style.left = S * points[i].x - S / 2 + "px";
+                el.style.top = S * points[i].y - S / 2 + "px";
                 el.style.backgroundColor = colors[points[i].c];
                 domPoints.push(el);
             }
@@ -146,10 +160,12 @@
         }
 
 
+        function d2(a, b) {
+            return (a.x - b.x) ** 2 + (a.y - b.y) ** 2;
+        }
+
+
         function knearest(x, y, k) {
-            function d2(a, b) {
-                return (a.x - b.x) ** 2 + (a.y - b.y) ** 2;
-            }
             const sorted = points.sort((p1, p2) => d2(p2, { x, y }) < d2(p1, { x, y }));
             return sorted.slice(0, k);
         }
@@ -177,7 +193,7 @@
 
             function draw(x, y, c) {
                 ctx.fillStyle = colors[c];
-                ctx.fillRect(x * S, y * S, S, S);
+                ctx.fillRect(x * S-S/2, y * S-S/2, S, S);
             }
 
             ctx.globalAlpha = 0.2;
@@ -205,20 +221,29 @@
 
 
 
-            currentDomPoint.style.left = x * S + "px";
-            currentDomPoint.style.top = y * S + "px";
+            currentDomPoint.style.left = x * S - S / 2 + "px";
+            currentDomPoint.style.top = y * S - S / 2 + "px";
 
             for (const domPoint of domPoints) {
                 domPoint.classList.remove("highlight");
             }
 
             const k = kInput.value;
+            svg.innerHTML = "";
+
             for (const p of knearest(x, y, k)) {
                 const el = domPoints[p.i];
                 domPoints[p.i] = el.cloneNode(true);
                 playground.appendChild(domPoints[p.i]);
                 el.remove();
                 domPoints[p.i].classList.add("highlight");
+
+                const circle = document.createElementNS('http://www.w3.org/2000/svg', "circle");
+                circle.setAttribute("cx", S * x + "");
+                circle.setAttribute("cy", S * y + "");
+                circle.setAttribute("r", S * Math.sqrt(d2({ x, y }, p)));
+
+                svg.appendChild(circle);
             }
 
 
@@ -227,6 +252,12 @@
             currentDomPoint = el;
             playground.appendChild(currentDomPoint);
             currentDomPoint.style.backgroundColor = colors[knn(x, y, k)];
+
+
+
+
+
+
 
         }
 

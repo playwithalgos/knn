@@ -166,7 +166,7 @@
 
 
         function knearest(x, y, k) {
-            const sorted = points.sort((p1, p2) => d2(p2, { x, y }) < d2(p1, { x, y }));
+            const sorted = points.sort((p1, p2) => d2(p1, { x, y }) - d2(p2, { x, y }));
             return sorted.slice(0, k);
         }
 
